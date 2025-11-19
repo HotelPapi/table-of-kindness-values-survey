@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table of Kindness - Values Identification Survey</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d4ba 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #3d7a7a;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header h2 {
+            color: #666;
+            font-size: 1.3em;
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            color: #555;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .sticker-counter {
+            background: #3d7a7a;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .sticker-counter h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .stickers-display {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            font-size: 2em;
+            margin-top: 10px;
+        }
+
+        .sticker {
+            display: inline-block;
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .value-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .value-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border-color: #3d7a7a;
+        }
+
+        .value-card.selected {
+            border-color: #3d7a7a;
+            background: #f0f9f9;
+        }
+
+        .value-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .value-card.disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .value-title {
+            color: #3d7a7a;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .value-translations {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .value-stickers {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            font-size: 1.5em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #3d7a7a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2d5a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #e8d4ba;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d4c0a6;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .results-section h2 {
+            color: #3d7a7a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            max-width: 900px;
+            margin: 0 auto;
+            height: 500px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: #f5e6d3;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3d7a7a;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .methodology {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            line-height: 1.8;
+        }
+
+        .methodology h2 {
+            color: #3d7a7a;
+            margin-bottom: 20px;
+        }
+
+        .methodology h3 {
+            color: #3d7a7a;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .methodology p {
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .methodology ul {
+            margin-left: 30px;
+            color: #555;
+        }
+
+        .methodology li {
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 4px solid #3d7a7a;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            background: #e8d4ba;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #3d7a7a;
+            color: white;
+        }
+
+        .winner-banner {
+            background: linear-gradient(135deg, #3d7a7a 0%, #2d5a5a 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .winner-banner h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const VALUES_DATA = [
+            {
+                id: 'work-recognition',
+                english: 'Work Recognition',
+                creole: 'Rekonesans Travay',
+                spanish: 'Reconocimiento del Trabajo'
+            },
+            {
+                id: 'three-meals',
+                english: 'Three Meals a Day',
+                creole: 'Twa Repas pa Jou',
+                spanish: 'Tres Comidas al Día'
+            },
+            {
+                id: 'growth-training',
+                english: 'Growth & Training Opportunities',
+                creole: 'Oportunite pou Aprann ak Devlopman',
+                spanish: 'Oportunidades de Crecimiento y Capacitación'
+            },
+            {
+                id: 'learning-english',
+                english: 'Learning English',
+                creole: 'Aprann Anglè',
+                spanish: 'Aprender Inglés'
+            },
+            {
+                id: 'respect-appreciation',
+                english: 'Respect & Appreciation',
+                creole: 'Respè ak Apresyasyon',
+                spanish: 'Respeto y Aprecio'
+            },
+            {
+                id: 'coffee-breaks',
+                english: 'Coffee & Break Moments',
+                creole: 'Kafe ak Ti Poz',
+                spanish: 'Café y Momentos de Descanso'
+            },
+            {
+                id: 'family-team',
+                english: 'Family / Team Connection',
+                creole: 'Lyen Fanmi / Ekip',
+                spanish: 'Conexión Familiar / de Equipo'
+            },
+            {
+                id: 'safety-wellbeing',
+                english: 'Safety & Well-Being',
+                creole: 'Sekirite ak Byenèt',
+                spanish: 'Seguridad y Bienestar'
+            },
+            {
+                id: 'fair-pay',
+                english: 'Fair Pay & Job Stability',
+                creole: 'Bon Salè ak Estabilite Travay',
+                spanish: 'Pago Justo y Estabilidad Laboral'
+            },
+            {
+                id: 'voice-participation',
+                english: 'Voice & Participation',
+                creole: 'Vwa ak Patisipasyon',
+                spanish: 'Voz y Participación'
+            },
+            {
+                id: 'clean-workspaces',
+                english: 'Clean, Comfortable Workspaces',
+                creole: 'Espas Travay Pwòp ak Konfòtab',
+                spanish: 'Espacios de Trabajo Limpios y Cómodos'
+            },
+            {
+                id: 'mental-health',
+                english: 'Mental Health & Support',
+                creole: 'Sante Mantal ak Sipò',
+                spanish: 'Salud Mental y Apoyo'
+            }
+        ];
+
+        function ValuesIdentificationApp() {
+            const [selections, setSelections] = useState({});
+            const [stickersRemaining, setStickersRemaining] = useState(3);
+            const [allResponses, setAllResponses] = useState([]);
+            const [showResults, setShowResults] = useState(false);
+            const [activeTab, setActiveTab] = useState('survey');
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            // Load saved responses from localStorage
+            useEffect(() => {
+                const saved = localStorage.getItem('valuesResponses');
+                if (saved) {
+                    setAllResponses(JSON.parse(saved));
+                }
+            }, []);
+
+            const handleValueClick = (valueId) => {
+                if (selections[valueId]) {
+                    // Remove a sticker
+                    const newSelections = { ...selections };
+                    newSelections[valueId]--;
+                    if (newSelections[valueId] === 0) {
+                        delete newSelections[valueId];
+                    }
+                    setSelections(newSelections);
+                    setStickersRemaining(stickersRemaining + 1);
+                } else if (stickersRemaining > 0) {
+                    // Add a sticker
+                    setSelections({ ...selections, [valueId]: (selections[valueId] || 0) + 1 });
+                    setStickersRemaining(stickersRemaining - 1);
+                }
+            };
+
+            const handleSubmit = () => {
+                if (stickersRemaining === 0) {
+                    const newResponses = [...allResponses, selections];
+                    setAllResponses(newResponses);
+                    localStorage.setItem('valuesResponses', JSON.stringify(newResponses));
+                    setShowResults(true);
+                    setActiveTab('results');
+                }
+            };
+
+            const handleReset = () => {
+                setSelections({});
+                setStickersRemaining(3);
+                setShowResults(false);
+            };
+
+            const handleClearAllData = () => {
+                if (confirm('Are you sure you want to clear all survey data? This cannot be undone.')) {
+                    setAllResponses([]);
+                    localStorage.removeItem('valuesResponses');
+                    handleReset();
+                }
+            };
+
+            const getTotalStickers = () => {
+                const totals = {};
+                allResponses.forEach(response => {
+                    Object.entries(response).forEach(([key, count]) => {
+                        totals[key] = (totals[key] || 0) + count;
+                    });
+                });
+                return totals;
+            };
+
+            const getTopValue = () => {
+                const totals = getTotalStickers();
+                let topValue = null;
+                let maxCount = 0;
+                Object.entries(totals).forEach(([key, count]) => {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        topValue = key;
+                    }
+                });
+                return topValue ? VALUES_DATA.find(v => v.id === topValue) : null;
+            };
+
+            useEffect(() => {
+                if (showResults && chartRef.current) {
+                    const totals = getTotalStickers();
+                    const data = VALUES_DATA.map(value => totals[value.id] || 0);
+                    
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    const ctx = chartRef.current.getContext('2d');
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: VALUES_DATA.map(v => v.english),
+                            datasets: [{
+                                label: 'Number of Stickers',
+                                data: data,
+                                backgroundColor: data.map((_, i) => 
+                                    i === data.indexOf(Math.max(...data)) ? '#3d7a7a' : '#e8d4ba'
+                                ),
+                                borderColor: '#3d7a7a',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Values Priority Distribution',
+                                    font: {
+                                        size: 18,
+                                        weight: 'bold'
+                                    },
+                                    color: '#3d7a7a'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Number of Stickers Received',
+                                        font: {
+                                            size: 14
+                                        }
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        font: {
+                                            size: 11
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [showResults, allResponses]);
+
+            const totalStickers = getTotalStickers();
+            const topValue = getTopValue();
+            const totalResponses = allResponses.length;
+            const totalStickersPlaced = Object.values(totalStickers).reduce((a, b) => a + b, 0);
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🌻 Table of Kindness 🌻</h1>
+                        <h2>Values & Needs Identification Survey</h2>
+                        <p>
+                            Experience the participatory methodology used at Holiday Inn Port of Miami. 
+                            Select your top 3 workplace priorities by clicking on the values below. 
+                            This interactive simulation demonstrates how we gathered authentic employee voices 
+                            through accessible, democratic research methods.
+                        </p>
+                    </div>
+
+                    <div className="tab-buttons">
+                        <button 
+                            className={`tab-btn ${activeTab === 'survey' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('survey')}
+                        >
+                            📋 Take Survey
+                        </button>
+                        <button 
+                            className={`tab-btn ${activeTab === 'results' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('results')}
+                            disabled={allResponses.length === 0}
+                        >
+                            📊 View Results
+                        </button>
+                        <button 
+                            className={`tab-btn ${activeTab === 'methodology' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('methodology')}
+                        >
+                            📖 Methodology
+                        </button>
+                    </div>
+
+                    {activeTab === 'survey' && (
+                        <>
+                            <div className="sticker-counter">
+                                <h3>Your Stickers Remaining: {stickersRemaining} / 3</h3>
+                                <p>Click on up to 3 values to place your stickers. Click again to remove a sticker.</p>
+                                <div className="stickers-display">
+                                    {[...Array(stickersRemaining)].map((_, i) => (
+                                        <span key={i} className="sticker">🔴</span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="values-grid">
+                                {VALUES_DATA.map(value => (
+                                    <div
+                                        key={value.id}
+                                        className={`value-card ${selections[value.id] ? 'selected' : ''} ${
+                                            !selections[value.id] && stickersRemaining === 0 ? 'disabled' : ''
+                                        }`}
+                                        onClick={() => handleValueClick(value.id)}
+                                    >
+                                        <div className="value-stickers">
+                                            {[...Array(selections[value.id] || 0)].map((_, i) => (
+                                                <span key={i}>🔴</span>
+                                            ))}
+                                        </div>
+                                        <div className="value-title">{value.english}</div>
+                                        <div className="value-translations">
+                                            <div>{value.spanish}</div>
+                                            <div>{value.creole}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="action-buttons">
+                                <button 
+                                    className="btn btn-primary" 
+                                    onClick={handleSubmit}
+                                    disabled={stickersRemaining !== 0}
+                                >
+                                    {stickersRemaining === 0 ? 'Submit Your Response' : `Place ${stickersRemaining} More Sticker${stickersRemaining !== 1 ? 's' : ''}`}
+                                </button>
+                                <button className="btn btn-secondary" onClick={handleReset}>
+                                    Reset My Selection
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {activeTab === 'results' && allResponses.length > 0 && (
+                        <div className="results-section">
+                            <h2>📊 Survey Results & Data Visualization</h2>
+                            
+                            {topValue && (
+                                <div className="winner-banner">
+                                    <h3>🏆 Top Priority Identified</h3>
+                                    <h2>{topValue.english}</h2>
+                                    <p>{topValue.spanish} • {topValue.creole}</p>
+                                    <p style={{marginTop: '10px', fontSize: '0.9em'}}>
+                                        Received {totalStickers[topValue.id]} sticker{totalStickers[topValue.id] !== 1 ? 's' : ''} from {totalResponses} participant{totalResponses !== 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="chart-container">
+                                <canvas ref={chartRef}></canvas>
+                            </div>
+
+                            <div className="stats">
+                                <div className="stat-card">
+                                    <div className="stat-value">{totalResponses}</div>
+                                    <div className="stat-label">Total Participants</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{totalStickersPlaced}</div>
+                                    <div className="stat-label">Total Stickers Placed</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{Object.keys(totalStickers).length}</div>
+                                    <div className="stat-label">Values Receiving Votes</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">
+                                        {topValue ? Math.round((totalStickers[topValue.id] / totalStickersPlaced) * 100) : 0}%
+                                    </div>
+                                    <div className="stat-label">Top Value Share</div>
+                                </div>
+                            </div>
+
+                            <div className="action-buttons" style={{marginTop: '30px'}}>
+                                <button className="btn btn-secondary" onClick={handleClearAllData}>
+                                    Clear All Survey Data
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'methodology' && (
+                        <div className="methodology">
+                            <h2>📖 Research Methodology</h2>
+                            
+                            <div className="highlight">
+                                <strong>The Challenge:</strong> How do you conduct meaningful research with a multilingual workforce 
+                                where traditional written surveys create barriers to participation?
+                            </div>
+
+                            <h3>The Sticker-Based Participatory Approach</h3>
+                            <p>
+                                At Holiday Inn Port of Miami, we developed an innovative participatory research method 
+                                that eliminates literacy barriers while maintaining methodological rigor. Here's how it worked:
+                            </p>
+
+                            <h3>Design & Implementation</h3>
+                            <ul>
+                                <li><strong>Visual Display:</strong> A large board displayed 12 workplace values in three languages 
+                                (English, Spanish, and Haitian Creole)</li>
+                                <li><strong>Equal Voice:</strong> Each team member received exactly 3 stickers, ensuring democratic 
+                                participation regardless of position or tenure</li>
+                                <li><strong>Active Participation:</strong> Team members physically placed stickers on their priority 
+                                concerns throughout the day</li>
+                                <li><strong>Real-Time Transparency:</strong> The visual accumulation of stickers created immediate 
+                                feedback and validated individual concerns through collective voice</li>
+                                <li><strong>Voluntary Engagement:</strong> Participation was optional, yet achieved near-universal 
+                                response due to accessibility and intrinsic interest</li>
+                            </ul>
+
+                            <h3>Key Findings</h3>
+                            <p>
+                                The results were unmistakable: <strong>"Respect and Appreciation"</strong> received stickers 
+                                from nearly every participating team member, creating a dense visual cluster that demonstrated 
+                                clear consensus. While material concerns like fair pay and meals received attention, the 
+                                overwhelming priority was dignity and recognition.
+                            </p>
+
+                            <h3>Methodological Advantages</h3>
+                            <ul>
+                                <li><strong>Accessibility:</strong> Eliminates literacy barriers while maintaining data quality</li>
+                                <li><strong>Engagement:</strong> Playful, hands-on approach encourages authentic participation</li>
+                                <li><strong>Transparency:</strong> Visual feedback validates concerns and builds trust</li>
+                                <li><strong>Democratic:</strong> Three-sticker limit ensures equality of voice</li>
+                                <li><strong>Quantifiable:</strong> Generates measurable data for analysis</li>
+                                <li><strong>Respectful:</strong> Honors participant agency and dignity</li>
+                            </ul>
+
+                            <h3>From Values to Action</h3>
+                            <p>
+                                This Phase One survey informed the creation of The Table of Kindness initiative 
+                                (Phase Two) and the development of the Gross Happiness Index (Phase Three). The finding 
+                                that respect supersedes material concerns fundamentally shaped our approach to hospitality 
+                                management and employee well-being.
+                            </p>
+
+                            <div className="highlight">
+                                <strong>Research Context:</strong> This methodology is part of ongoing student research at 
+                                Florida International University's Chaplin School of Hospitality & Tourism Management, 
+                                adapting Bhutan's Gross National Happiness framework to hospitality operations.
+                            </div>
+
+                            <h3>Try It Yourself</h3>
+                            <p>
+                                This interactive simulation lets you experience the participatory methodology firsthand. 
+                                Click on the "Take Survey" tab to place your three stickers and see how your priorities 
+                                compare to others. The accumulated data visualizes how clear patterns emerge from 
+                                individual choices—just as they did at Holiday Inn Port of Miami.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ValuesIdentificationApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
